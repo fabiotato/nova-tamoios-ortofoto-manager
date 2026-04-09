@@ -26,8 +26,6 @@
 
 ## 1. Contexto do Problema
 
-Documentado no PDF *"Recuperando ortofotos no Mapa e Salvamento adequado em CD ou DVD.pdf"*, o problema é o seguinte:
-
 ### 1.1 O Que Acontece
 
 Arquivos AutoCAD (`.DWG`) que contêm **referências externas de imagens** (ortofotos no formato PNG) armazenam **caminhos absolutos** para essas imagens. Exemplo:
@@ -71,7 +69,7 @@ No Projeto Nova Tamoios o problema é amplificado por:
 
 ### 3.1 Processo Manual (Anterior — via REDIR)
 
-O PDF descreve o processo manual que exigia:
+O processo manual que exigia:
 
 1. Copiar todas as 78 ortofotos para uma pasta única
 2. Digitar `REDIR` na linha de comando do AutoCAD
@@ -548,6 +546,4 @@ Mapa de Pendencias - Panorama da Obra - Kyioshi FINAL - Standard/
 - **Arquitetura**: Python + pandas + matplotlib + ezdxf + scripts AutoCAD
 - **Data**: 06/04/2026
 
----
 
-*Documento gerado manualmente como especificação completa da solução OrtoFoto Manager.*
