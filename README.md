@@ -204,6 +204,8 @@ python main.py --scan-only
 
 Gera catálogo CSV/JSON sem processar scripts.
 
+![ortofotos_catalogo](https://github.com/fabiotato/nova-tamoios-ortofoto-manager/blob/main/output/ortofotos_catalogo.csv)
+
 ### Opção 3: Apenas Scripts
 
 ```bash
