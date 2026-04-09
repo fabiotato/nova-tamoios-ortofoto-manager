@@ -1,549 +1,527 @@
-# 📊 OrtoFoto Manager v1.0.0
+# 🛣️ OrtoFoto Manager — Automação Inteligente de Ortofotos em Engenharia Civil
 
-**Automação Inteligente de Correção de Referências de Ortofotos em Projetos AutoCAD**
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
+[![Pandas](https://img.shields.io/badge/Pandas-3.0%2B-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
+[![AutoCAD](https://img.shields.io/badge/AutoCAD-DWG%2FXREF-c41e3a?logo=autodesk&logoColor=white)](https://www.autodesk.com/products/autocad/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-> *Ferramenta de Análise de Dados + Automação CAD para o Projeto Nova Tamoios — Mapa de Pendências (KYIOSHI)*
-
----
-
-## 📋 Índice
-
-1. [Contexto do Problema](#1-contexto-do-problema)
-2. [Impacto no Projeto](#2-impacto-no-projeto)
-3. [Solução Anterior vs. Nova Solução](#3-solução-anterior-vs-nova-solução)
-4. [Arquitetura da Solução](#4-arquitetura-da-solução)
-5. [Instalação e Ambiente](#5-instalação-e-ambiente)
-6. [Como Usar](#6-como-usar)
-7. [Módulos do Código](#7-módulos-do-código)
-8. [Relação com Análise de Dados](#8-relação-com-análise-de-dados)
-9. [Scripts AutoCAD Gerados](#9-scripts-autocad-gerados)
-10. [Fluxo de Entrega em CD/DVD](#10-fluxo-de-entrega-em-cddvd)
-11. [Estrutura de Arquivos](#11-estrutura-de-arquivos)
-12. [Saídas Geradas](#12-saídas-geradas)
-13. [Extensões Futuras](#13-extensões-futuras)
+> **Pipeline Python + AutoLISP** para correção automatizada de 78 referências de ortofotos em projetos AutoCAD. Projeto real aplicado à **Duplicação da Rodovia Nova Tamoios (SP-099), Trecho Planalto**.
 
 ---
 
-## 1. Contexto do Problema
+## 📚 Índice
 
-### 1.1 O Que Acontece
+- [O Problema](#-o-problema)
+- [A Solução](#-a-solução)
+- [Características](#-características)
+- [Requisitos](#-requisitos)
+- [Instalação](#-instalação)
+- [Como Usar](#-como-usar)
+- [Arquitetura](#-arquitetura)
+- [Saídas Geradas](#-saídas-geradas)
+- [Aplicação em Engenharia de Dados](#-aplicação-em-engenharia-de-dados)
+- [Roadmap](#-roadmap)
+- [Contribuições](#-contribuições)
 
-Arquivos AutoCAD (`.DWG`) que contêm **referências externas de imagens** (ortofotos no formato PNG) armazenam **caminhos absolutos** para essas imagens. Exemplo:
+---
+
+## 🎯 O Problema
+
+### Contexto Real
+
+Projetos de engenharia civil entregues em mídia física (CD/DVD) frequentemente contêm arquivos AutoCAD (`.DWG`) que referenciam imagens raster (ortofotos) através de **caminhos absolutos**. Exemplo:
 
 ```
 C:\Usuarios\Fabio\Projetos\Novas\Ortofotos Nova Tamoios\L1_ORTOFOTO_001.png
 ```
 
-Quando o arquivo DWG é:
-- Copiado para **outro computador**
-- Aberto a partir de um **servidor diferente**
-- Transferido para **HD externo**, **CD** ou **DVD**
+### Quando o Problema Ocorre
 
-...o caminho absoluto **não existe mais** na máquina destino. O AutoCAD exibe apenas o caminho antigo ao invés da imagem — a referência é "perdida".
+- 📦 Arquivo copiado para outro computador
+- 🖥️ Projeto aberto de um servidor diferente
+- 💾 Transferência via HD externo ou mídia física
+- 👥 Múltiplos usuários acessando em máquinas distintas
 
-### 1.2 Complexidade Adicional
+### Impacto no Projeto Nova Tamoios
 
-No Projeto Nova Tamoios o problema é amplificado por:
-- **78 ortofotos** no total (distribuídas entre Lote 1 e Lote 2)
-- Imagens de alta resolução (PNG, dezenas a centenas de MB cada)
-- Necessidade de entregar o projeto em mídia física (CD/DVD)
-- Múltiplas pessoas acessando o arquivo em máquinas diferentes
+| Métrica | Valor |
+|---------|-------|
+| **Ortofotos totais** | 78 imagens PNG |
+| **Tamanho total** | Centenas de GB |
+| **Lotes** | 2 (L1 + L2) |
+| **Tipo de referência** | XREF / IMAGEDEF (raster) |
+| **Arquivo principal** | `Mapa de Pendências - Panorama da Obra - Kyioshi FINAL.dwg` |
+| **Frequência do problema** | 100% das movimentações de arquivo |
 
----
-
-## 2. Impacto no Projeto
-
-| Aspecto | Detalhe |
-|---------|---------|
-| **Ortofotos totais** | 78 (formato PNG) |
-| **Lotes** | L1 (Lote 1) + L2 (Lote 2) |
-| **Tipo de referência** | XREF / IMAGEDEF (referência externa raster) |
-| **Formato CAD** | DWG (AutoCAD) |
-| **Arquivo principal** | `Mapa de Pendencias - Panorama da Obra - Kyioshi FINAL.dwg` |
-| **Pasta de ortofotos** | `Ortofotos Nova Tamoios` |
-| **Frequência do problema** | Toda vez que o DWG é movido de local/máquina |
+**Resultado**: Ortofotos não aparecem no AutoCAD, apenas caminhos quebrados. ❌
 
 ---
 
-## 3. Solução Anterior vs. Nova Solução
+## 💡 A Solução
 
-### 3.1 Processo Manual (Anterior — via REDIR)
+### De Manual para Automatizado
 
-O processo manual que exigia:
-
-1. Copiar todas as 78 ortofotos para uma pasta única
-2. Digitar `REDIR` na linha de comando do AutoCAD
-3. Configurar: XREFS ✅ + IMAGES ✅ → OK
-4. Digitar `*` para todos os arquivos
-5. Copiar o caminho novo do Windows Explorer
-6. Colar na linha de comando do AutoCAD
-7. Torcer para funcionar (sem validação de completude)
-
-**Problemas**: manual, não reprodutível, sem registro, sem validação, propenso a erro humano.
-
-### 3.2 Solução Automatizada (OrtoFoto Manager)
+#### ❌ Processo Manual (REDIR)
 
 ```
-┌─────────────────────────────────────────────────┐
-│           OrtoFoto Manager — Pipeline            │
-├─────────────────────────────────────────────────┤
-│                                                 │
-│  1. Scan → 2. Análise → 3. Correção → 4. Report │
-│     │            │             │            │    │
-│     ▼            ▼             ▼            ▼    │
-│  Catálogo    DataFrame    Scripts .lsp   Markdown │
-│  CSV/JSON    + Gráficos   Scripts .scr   + PNGs   │
-│                          Scripts .bat              │
-└─────────────────────────────────────────────────┘
+1. Copiar todas as 78 ortofotos para pasta única
+2. Abrir AutoCAD → digitar REDIR
+3. Digitar * para selecionar todos
+4. Manualmente digitar novo caminho
+5. Torcer para funcionar
 ```
 
-A nova solução oferece:
-- **Scan automático**: descobre todas as 78 ortofotos sem intervenção manual
-- **Catálogo em DataFrame**: pandas organiza nome, lote, tamanho, resolução, data, status
-- **Validação de completude**: verifica se as 78 esperadas foram encontradas
-- **Scripts autoexecutáveis**: `.lsp`, `.scr`, `.bat` — correção com um clique
-- **Relatório completo**: Markdown + gráficos de análise de dados
-- **Reprodutibilidade**: mesmo resultado toda vez, sem variação humana
+**Problemas**: não reprodutível, sem logs, propenso a erro humano, sem validação.
+
+#### ✅ Solução Automatizada
+
+```
+┌────────────────────────────────────────────────┐
+│        OrtoFoto Manager — Pipeline              │
+├────────────────────────────────────────────────┤
+│  Scan  →  Análise  →  Correção  →  Report      │
+│   ↓        ↓           ↓            ↓           │
+│  CSV/   DataFrame   Scripts      Markdown      │
+│  JSON    + EDA      .lsp/.scr/.bat + Gráficos  │
+└────────────────────────────────────────────────┘
+```
 
 ---
 
-## 4. Arquitetura da Solução
+## ⚡ Características
 
-### 4.1 Diagrama de Componentes
+### 🔍 Descoberta Automática
+- Scan inteligente de todas as 78 ortofotas
+- Classificação automática por lote (L1/L2)
+- Extração de metadados: resolução, tamanho, data
+- Exportação em CSV e JSON
 
-```
-main.py (Ponto de Entrada)
-    │
-    ├──► ortofoto_manager/scanner.py
-    │       │   OrtoFotoScanner
-    │       ├── discover_ortofotos()     → lista de dict
-    │       ├── scan()                   → pandas DataFrame
-    │       ├── export_csv()             → output/catalogo.csv
-    │       └── export_json()            → output/catalogo.json
-    │
-    ├──► ortofoto_manager/xref_repair.py
-    │       │   XREFRepair
-    │       ├── analyze_dxfref()         → diagnóstico de paths
-    │       ├── fix_paths_in_dxf()       → corrige paths (via ezdxf)
-    │       └── generate_autocad_script()→ .lsp + .scr + .bat
-    │
-    └──► ortofoto_manager/report_generator.py
-            │   ReportGenerator
-            ├── generate_charts()        → gráficos matplotlib PNG
-            ├── generate_markdown_report()→ relatório completo
-            └── save_report()            → output/relatorio.md
-```
+### 📊 Análise de Dados
+- DataFrame estruturado com pandas
+- EDA (Análise Exploratória de Dados)
+- Gráficos matplotlib: distribuição, histogramas, pizza
+- Estatísticas: média, mediana, outliers
 
-### 4.2 Tecnologias Utilizadas
+### 🛠️ Correção Automatizada
+- **3 formatos de script gerados**:
+  - AutoLISP (`.lsp`) — drag-and-drop no AutoCAD
+  - Script CAD (`.scr`) — execução via SCRIPT command
+  - Batch Windows (`.bat`) — sem Python na máquina destino
 
-| Tecnologia | Versão | Papel |
-|-----------|--------|-------|
-| **Python** | 3.14+ | Linguagem principal |
-| **ezdxf** | 1.4+ | Leitura/escrita de arquivos DXF |
-| **pandas** | 3.0+ | Catálogo, EDA, dataframes |
-| **matplotlib** | 3.10+ | Gráficos e visualizações |
-| **Pillow** | 12.2+ | Metadados de imagem (resolução) |
-| **rich** | 14.3+ | Interface de terminal (tabelas, barras) |
-| **tabulate** | 0.10+ | Tabelas em relatórios Markdown |
-| **colorama** | 0.4+ | Cores no terminal (Windows) |
+### 📋 Relatórios Profissionais
+- Markdown completo com tabelas e gráficos
+- Checklist de completude (78/78)
+- Documentação de entrega
+- Rastreabilidade total
+
+### 🔁 Reprodutibilidade
+- Mesmos resultados, toda vez
+- Sem variação humana
+- Logs de execução
+- Validação automática
 
 ---
 
-## 5. Instalação e Ambiente
+## 📋 Requisitos
 
-### 5.1 Ambiente Virtual (VENV) — Já Configurado
+### Mínimos
 
-O projeto já possui ambiente virtual criado e configurado:
+- **Python** 3.11 ou superior
+- **pip** (gerenciador de pacotes)
+- **AutoCAD** 2020+ (para execução dos scripts)
+- **Windows** (scripts batch são .bat)
+
+### Recomendado
+
+- **VS Code** ou PyCharm (desenvolvimento)
+- **Git** (versionamento)
+- **Virtual Environment** (isolamento de dependências)
+
+---
+
+## 💻 Instalação
+
+### 1️⃣ Clone o Repositório
 
 ```bash
-# Ativar o ambiente virtual
-.venv\Scripts\activate
-
-# Verificar que está ativo (deve mostrar .venv no path)
-where python
+git clone https://github.com/seu-usuario/nova-tamoios.git
+cd nova-tamoios
 ```
 
-### 5.2 Instalação Manual (se necessário)
+### 2️⃣ Crie e Ative o Ambiente Virtual
 
+**Windows:**
 ```bash
-# Criar venv do zero
 python -m venv .venv
-
-# Ativar
 .venv\Scripts\activate
+```
 
-# Instalar dependências
+**Linux/macOS:**
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+```
+
+### 3️⃣ Instale as Dependências
+
+```bash
 pip install -r requirements.txt
 ```
 
-### 5.3 Verificação
+### 4️⃣ Verifique a Instalação
 
 ```bash
-.venv\Scripts\activate
-python -c "import ezdxf, pandas, matplotlib, rich; print('Tudo OK!')"
+python -c "import ezdxf, pandas, matplotlib, rich; print('✅ Tudo instalado com sucesso!')"
 ```
 
 ---
 
-## 6. Como Usar
+## 🚀 Como Usar
 
-### 6.1 Execução Completa (recomendado)
+### Opção 1: Execução Completa (Recomendado)
 
 ```bash
 .venv\Scripts\activate
 python main.py
 ```
 
-Executa todas as etapas: scan → análise → scripts → relatório.
+**Executa**:
+1. Scan de ortofotos
+2. Análise exploratória
+3. Geração de scripts
+4. Relatório completo
 
-### 6.2 Apenas Scan
+### Opção 2: Apenas Scan
 
 ```bash
 python main.py --scan-only
 ```
 
-Apenas descobre e cataloga as ortofotos (gera CSV + JSON).
+Gera catálogo CSV/JSON sem processar scripts.
 
-### 6.3 Apenas Scripts AutoCAD
+### Opção 3: Apenas Scripts
 
 ```bash
 python main.py --scripts-only
 ```
 
-Gera `.lsp`, `.scr` e `.bat` sem re-escanear.
+Gera `.lsp`, `.scr`, `.bat` sem re-escanear.
 
-### 6.4 Apenas Relatório
+### Opção 4: Apenas Relatório
 
 ```bash
 python main.py --report-only
 ```
 
-Gera relatório Markdown e gráficos sem reprocessar.
+Gera markdown e gráficos sem reprocessar.
 
-### 6.5 Caminho Personalizado
+### Opção 5: Caminho Personalizado
 
 ```bash
-python main.py --ortofotos-dir "D:\MinhaPasta\Ortofotos"
+python main.py --ortofotos-dir "D:\Minha Pasta\Ortofotos"
 ```
 
-### 6.6 Modo Sem Python (apenas AutoCAD)
+### 🖥️ Sem Python na Máquina Destino
 
-Se não tiver Python instalado na máquina destino:
+1. Copie os scripts gerados junto com o DWG:
+   - `fix_ortofotos.bat`
+   - `fix_ortofotos.lsp`
+   - `fix_ortofotos.scr`
 
-1. Copie os scripts gerados (`.lsp`, `.scr`, `.bat`) junto com o DWG
-2. Execute `fix_ortofotos.bat` — duplo clique
-3. O AutoCAD abrirá, executará o REDIR automaticamente e salvará
+2. Duplo clique em `fix_ortofotos.bat`
+
+3. O AutoCAD abrirá, executará a correção e salvará automaticamente ✅
 
 ---
 
-## 7. Módulos do Código
+## 🏗️ Arquitetura
 
-### 7.1 `scanner.py` — Scanner de Ortofotos
+### Estrutura de Módulos
 
-**Responsabilidade**: Descobrir, catalogar e analisar todas as ortofotos do projeto.
-
-```python
-scanner = OrtoFotoScanner(project_dir=".", ortofotos_folder="Ortofotos Nova Tamoios")
-df = scanner.scan()
-print(scanner.summary())
-scanner.export_csv("output/catalogo.csv")
+```
+ortofoto_manager/
+│
+├── __init__.py                    # Init do pacote
+├── main.py                        # Orquestrador principal
+│
+├── scanner.py                     # Descoberta e catálogo
+│   └── OrtoFotoScanner
+│       ├── discover_ortofotos()   → Lista de metadados
+│       ├── scan()                 → pandas DataFrame
+│       ├── export_csv()           → ortofotos_catalogo.csv
+│       └── export_json()          → ortofotos_catalogo.json
+│
+├── xref_repair.py                 # Correção de paths
+│   └── XREFRepair
+│       ├── analyze_dxfref()       → Diagnóstico
+│       ├── fix_paths_in_dxf()     → Correção direta
+│       └── generate_autocad_script()→ .lsp/.scr/.bat
+│
+└── report_generator.py            # Relatórios
+    └── ReportGenerator
+        ├── generate_charts()      → PNG com matplotlib
+        ├── generate_markdown_report()→ Relatório completo
+        └── save_report()          → Arquivos de saída
 ```
 
-**Métodos principais**:
+### Stack Tecnológico
 
-| Método | Retorna | Descrição |
-|--------|---------|-----------|
-| `discover_ortofotos()` | `list[dict]` | Lista de metadados de cada imagem |
-| `scan()` | `pd.DataFrame` | DataFrame completo com colunas analisáveis |
-| `summary()` | `str` | Resumo textual formatado |
-| `export_csv()` | `str` | Salva CSV exportável |
-| `export_json()` | `str` | Salva JSON para API |
-
-**Colunas do DataFrame**:
-- `nome_arquivo` — nome do arquivo
-- `lote` — L1 ou L2 (classificação automática pelo nome)
-- `tamanho_bytes` / `tamanho_mb` — tamanho do arquivo
-- `largura_px` / `altura_px` — resolução da imagem
-- `resolucao_total_px` — largura × altura
-- `formato` — extensão (.PNG, .JPG, etc.)
-- `data_criacao` / `data_modificacao` — timestamps
-- `status` — found, erro, not_found
-- `tamanho_categoria` — binning automático (<5MB, 5-20MB, etc.)
-
-### 7.2 `xref_repair.py` — Correção de Paths XREF
-
-**Responsabilidade**: Automatizar o processo REDIR do AutoCAD.
-
-```python
-xref = XREFRepair(project_dir=".")
-
-# Opção A: Correção direta em DXF (precisa conversor DWG→DXF)
-resultado = xref.fix_paths_in_dxf("mapa.dxf", "novo/caminho/ortofotos/")
-
-# Opção B: Gerar scripts para o AutoCAD (recomendado, sem dependência externa)
-scripts = xref.generate_autocad_script("c:/ortofotos/novo/caminho")
-```
-
-**O que gera**:
-
-| Arquivo | Formato | Como executar |
-|---------|---------|---------------|
-| `fix_ortofotos.lsp` | AutoLISP | Drag-and-drop no AutoCAD |
-| `fix_ortofotos.scr` | Script CAD | Arrastar para o CAD ou accoreconsole |
-| `fix_ortofotos.bat` | Batch Windows | Duplo clique (abre CAD automaticamente) |
-
-### 7.3 `report_generator.py` — Relatórios e Gráficos
-
-**Responsabilidade**: Gerar relatório Markdown e gráficos de análise.
-
-```python
-reporter = ReportGenerator(project_dir=".", scanner_df=df)
-charts = reporter.generate_charts()
-reporter.save_report(xref_results=xref_resultados)
-```
-
-**Gráficos gerados**:
-
-| Gráfico | Tipo | O Que Mostra |
-|---------|------|--------------|
-| `chart_distribuicao_lotes.png` | Barras | Quantidade L1 vs L2 |
-| `chart_analise_tamanhos.png` | Histograma + Boxplot | Distribuição de tamanhos |
-| `chart_status_referencias.png` | Pizza | Status (OK / Broken) |
-| `chart_formatos.png` | Pizza | Distribuição por formato |
+| Tecnologia | Versão | Propósito |
+|-----------|--------|-----------|
+| **Python** | 3.11+ | Linguagem principal |
+| **ezdxf** | 1.4+ | Leitura/escrita DXF (AutoCAD) |
+| **pandas** | 3.0+ | DataFrames e análise |
+| **matplotlib** | 3.10+ | Gráficos e visualizações |
+| **Pillow** | 12.2+ | Metadados de imagem |
+| **rich** | 14.3+ | UI do terminal |
+| **tabulate** | 0.10+ | Tabelas em markdown |
 
 ---
 
-## 8. Relação com Análise de Dados
+## 📊 Saídas Geradas
 
-Esta solução é um exemplo prático de como conceitos de **Ciência de Dados** se aplicam a problemas de **Engenharia Civil / CAD**:
+### 1. Catálogo de Dados
 
-### 8.1 Engenharia de Dados (Data Engineering)
+| Arquivo | Formato | Uso |
+|---------|---------|-----|
+| `output/ortofotos_catalogo.csv` | CSV | Abre em Excel, análise manual |
+| `output/ortofotos_catalogo.json` | JSON | Consumo via API ou scripts |
 
-O `OrtoFotoScanner` constrói um **catálogo estruturado** das 78 ortofotos usando pandas DataFrame — equivalente a um schema de banco de dados:
-
-```python
-# Filtro — como WHERE em SQL
-df_l1 = df[df['lote'] == 'L1']
-
-# Agregação — como GROUP BY
-df.groupby('lote')['tamanho_mb'].agg(['sum', 'mean', 'count'])
-
-# Ordenação — como ORDER BY
-df.sort_values('tamanho_mb', ascending=False)
+**Colunas do CSV:**
+```
+nome_arquivo, lote, tamanho_bytes, tamanho_mb, largura_px, altura_px, 
+resolucao_total_px, formato, data_criacao, data_modificacao, status, tamanho_categoria
 ```
 
-### 8.2 Análise Exploratória de Dados (EDA)
+### 2. Gráficos de Análise
 
-- **Histograma de tamanhos**: detecta outliers (ortofotos corrompidas ou desnecessariamente grandes)
-- **Boxplot por lote**: compara escala entre Lote 1 e Lote 2
-- **Estatísticas descritivas**: média, mediana, desvio padrão revelam padrões
-- **Valoração de completude**: `total_encontrado / 78 * 100` — métrica KPI
+| Gráfico | Arquivo | Insight |
+|---------|---------|---------|
+| Distribuição por Lote | `chart_distribuicao_lotes.png` | L1 vs L2 balance |
+| Análise de Tamanhos | `chart_analise_tamanhos.png` | Histograma + Boxplot |
+| Status de Refs | `chart_status_referencias.png` | Pizza (OK/Broken) |
+| Distribuição de Formatos | `chart_formatos.png` | Padrão de arquivo |
 
-### 8.3 Visualização de Dados
+### 3. Scripts de Correção
 
-Os gráficos matplotlib servem como **artefatos de comunicação**:
-- Para **gestores**: mostram completude do projeto de forma visual
-- Para **equipe técnica**: identificam anomalias (imagens fora do padrão)
-- Para **clientes**: evidência de qualidade e controle
+**Auto-gerados, prontos para usar:**
 
-### 8.4 Qualidade de Dados (Data Quality)
-
-A validação automática implementada é análoga a práticas de Data Engineering:
-
-| Conceito de DQ | Implementação no OrtoFoto Manager |
-|----------------|-----------------------------------|
-| **Completude** | Verifica 78/78 ortofotos presentes |
-| **Consistência** | Classificação automática por lote |
-| **Validação** | Check se arquivos existem (status) |
-| **Monitoramento** | Catálogo CSV/JSON reutilizável |
-
-### 8.5 Automação de Processos
-
-O mapeamento de um processo manual (REDIR) para um pipeline automatizado é o cerne da **automação de dados**:
-- **ANTES**: processo manual → variável → sem registro → não reprodutível
-- **DEPOIS**: pipeline Python → consistente → com logs → 100% reprodutível
-
----
-
-## 9. Scripts AutoCAD Gerados
-
-### 9.1 Script AutoLISP (`fix_ortofotos.lsp`)
-
-Quando carregado no AutoCAD, cria o comando `FIX_ORTOFOTOS` que:
-1. Itera sobre todos os `IMAGEDEF` no banco de dados do desenho
-2. Para cada imagem com caminho quebrado, busca no novo diretório
-3. Se encontrar: substitui o path
-4. Se não encontrar: loga o arquivo ausente
-5. Exibe resumo final
-
-**Como usar**:
-```
-1. Abra o DWG no AutoCAD
-2. Arraste o arquivo .lsp para a janela do AutoCAD
-3. Digite: FIX_ORTOFOTOS
-4. Pressione Enter — pronto!
+#### `fix_ortofotos.lsp` (AutoLISP)
+```lisp
+; Comando: FIX_ORTOFOTOS
+; Uso: Arraste para a janela do AutoCAD
+; Executa: REDIR automático para todas as imagens
 ```
 
-### 9.2 Script de Comando (`fix_ortofotos.scr`)
-
-Script que simula a digitação manual dos comandos REDIR:
+#### `fix_ortofotos.scr` (Script CAD)
 ```
 REDIR
 *
 XREFS
 IMAGES
 *
-CAMINHO_NOVO_DAS_ORTOFOTOS
-_zoom
-_extents
+CAMINHO_NOVO_ORTOFOTOS
+_zoom _extents
 _qsave
 ```
 
-**Como usar**:
-```
-1. Abra o DWG no AutoCAD
-2. Digite SCRIPT na linha de comando
-3. Selecione o arquivo fix_ortofotos.scr
-4. Aguarde a execução
+#### `fix_ortofotos.bat` (Batch Windows)
+```batch
+@echo off
+REM Abre AutoCAD, carrega DWG e executa script automaticamente
+start "" "C:\Program Files\Autodesk\AutoCAD\acad.exe" /b "mapa.dwg" /s "fix_ortofotos.scr"
 ```
 
-### 9.3 Executável Batch (`fix_ortofotos.bat`)
+### 4. Relatório Markdown
 
-Wrapper que abre o AutoCAD com o DWG e executa o script automaticamente.
+Arquivo: `output/relatorio_analise.md`
 
-**Como usar**:
-```
-1. Duplo clique no .bat
-2. O AutoCAD abre, executa a correção e salva
-3. Verifique o resultado
-```
+Contém:
+- ✅ Resumo executivo
+- 📊 Estatísticas descritivas
+- 🔍 Análise por lote
+- 📈 Gráficos embarcados
+- ⚠️ Anomalias detectadas
+- ✔️ Checklist de completude
 
 ---
 
-## 10. Fluxo de Entrega em CD/DVD
+## 📚 Aplicação em Engenharia de Dados
 
-Conforme documentado no PDF original, o processo **CORRETO** de gravação:
+Este projeto demonstra práticas reais de **Data Engineering** e **Data Science**:
 
-### ✅ Procedimento Correto
+### 🔧 Engenharia de Dados
+- **Schema estruturado**: DataFrame com colunas bem-definidas
+- **Catálogo de dados**: CSV/JSON para rastreabilidade
+- **Validação**: Qualidade (completude, consistência)
+- **Pipeline**: Scan → Análise → Saída
 
-1. No AutoCAD: **PUBLISH → eTransmit**
-2. ConfirmeSalvar quando solicitado
-3. Salva o arquivo **ZIP** gerado
-4. **EXTRAI** o ZIP para uma pasta normal
-5. Abra o DWG da pasta extraída e verifique ortofotos
-6. Grave a **"pasta-mãe" completa** no CD/DVD
-7. Sempre transporte toda a estrutura de pastas
-
-### ❌ Erro Comum
-
-Gravar o ZIP direto no CD/DVD — o destinatário esquece de extrair e as ortofotos não aparecem.
-
-### Como o OrtoFoto Manager Ajuda
-
-O catálogo CSV/JSON gerado serve como **checklist de recebimento**:
+### 📊 Análise Exploratória (EDA)
 ```python
-import pandas as pd
-catalogo = pd.read_csv("ortofotos_catalogo.csv")
-print(f"Ortofotos recebidas: {len(catalogo)} de 78")
+# Filtros como SQL
+df_l1 = df[df['lote'] == 'L1']
+
+# Agregações
+df.groupby('lote')['tamanho_mb'].agg(['sum', 'mean', 'count'])
+
+# Ordenação
+df.sort_values('tamanho_mb', ascending=False).head(10)
+```
+
+### 🎯 Qualidade de Dados (Data Quality)
+
+| Dimensão | Implementação |
+|----------|---------------|
+| **Completude** | Verifica 78/78 ortofotos |
+| **Consistência** | Classificação automática por lote |
+| **Validação** | Check se arquivos existem |
+| **Monitoramento** | Catálogo reutilizável |
+
+### 🤖 Automação de Processos
+- **Antes**: Manual, variável, sem logs, não reprodutível
+- **Depois**: Automatizado, consistente, com logs, 100% reprodutível
+
+---
+
+## 📁 Estrutura de Diretórios
+
+```
+nova-tamoios/
+│
+├── .venv/                         # Ambiente virtual
+├── ortofoto_manager/              # Pacote principal
+│   ├── __init__.py
+│   ├── main.py
+│   ├── scanner.py
+│   ├── xref_repair.py
+│   └── report_generator.py
+│
+├── output/                        # Saídas geradas
+│   ├── ortofotos_catalogo.csv
+│   ├── ortofotos_catalogo.json
+│   ├── relatorio_analise.md
+│   ├── chart_*.png
+│   └── fix_ortofotos.{lsp,scr,bat}
+│
+├── logs/                          # Logs de execução
+├── docs/                          # Documentação
+├── tests/                         # Testes unitários
+│
+├── main.py                        # Ponto de entrada raiz
+├── requirements.txt               # Dependências
+├── README.md                      # Este arquivo
+├── LICENSE                        # MIT License
+└── .gitignore                     # Git ignore rules
 ```
 
 ---
 
-## 11. Estrutura de Arquivos
+## 🧪 Testes
 
+### Executar Testes
+
+```bash
+pytest tests/ -v
 ```
-Mapa de Pendencias - Panorama da Obra - Kyioshi FINAL - Standard/
-│
-├── .venv/                          # Ambiente virtual Python
-│   └── Scripts/
-│       ├── activate.bat
-│       └── python.exe
-│
-├── ortofoto_manager/               # Pacote principal
-│   ├── __init__.py                 # Init do pacote
-│   ├── main.py                     # Ponto de entrada CLI
-│   ├── scanner.py                  # Scanner de ortofotos
-│   ├── xref_repair.py              # Reparo de paths XREF
-│   └── report_generator.py         # Relatórios e gráficos
-│
-├── main.py                         # Ponto de entrada raiz
-├── requirements.txt                # Dependências
-│
-├── docs/
-│   └── config.json                 # Configuração do projeto
-│
-├── output/                         # Saídas geradas
-│   ├── ortofotos_catalogo.csv      # Catálogo completo
-│   ├── ortofotos_catalogo.json     # Catálogo JSON
-│   ├── relatorio_analise.md        # Relatório completo
-│   ├── chart_distribuicao_lotes.png
-│   ├── chart_analise_tamanhos.png
-│   ├── chart_status_referencias.png
-│   └── chart_formatos.png
-│
-├── fix_ortofotos.lsp               # Script AutoLISP (gerado)
-├── fix_ortofotos.scr               # Script de comando (gerado)
-├── fix_ortofotos.bat               # Executável batch (gerado)
-│
-├── logs/                           # Logs de execução
-│
-├── README.md                       # Este arquivo
-│
-└── [arquivos do projeto original]
-    ├── Mapa de Pendencias - Panorama da Obra - Kyioshi FINAL.dwg
-    └── Recuperando ortofotos no Mapa e Salvamento adequado em CD ou DVD.pdf
+
+### Cobertura de Testes
+
+```bash
+pytest tests/ --cov=ortofoto_manager --cov-report=html
 ```
 
 ---
 
-## 12. Saídas Geradas
+## 🔍 Troubleshooting
 
-### 12.1 Catálogo de Dados
+### ❌ "ModuleNotFoundError: No module named 'ezdxf'"
 
-| Saída | Formato | Uso |
-|-------|---------|-----|
-| `output/ortofotos_catalogo.csv` | CSV | Abre no Excel para análise manual |
-| `output/ortofotos_catalogo.json` | JSON | Consumo via API ou outros scripts Python |
-| `output/relatorio_analise.md` | Markdown | Documentação completa legível |
+**Solução**: Instale as dependências
+```bash
+pip install -r requirements.txt
+```
 
-### 12.2 Visualizações
+### ❌ "Arquivo DWG não encontrado"
 
-| Gráfico | Arquivo | Insight |
-|---------|---------|---------|
-| Distribuição por Lote | `chart_distribuicao_lotes.png` | Equilíbrio L1 vs L2 |
-| Análise de Tamanhos | `chart_analise_tamanhos.png` | Outliers, média, mediana |
-| Status de Referências | `chart_status_referencias.png` | Saúde dos paths de imagem |
-| Distribuição de Formatos | `chart_formatos.png` | Padrão de arquivos |
+**Solução**: Verifique o caminho
+```bash
+python main.py --ortofotos-dir "C:\Caminho\Correto"
+```
 
-### 12.3 Scripts de Correção
+### ❌ Script .bat não abre AutoCAD
 
-| Script | Extensão | Sem Python? |
-|--------|----------|-------------|
-| AutoLISP | `.lsp` | ✅ |
-| Script CAD | `.scr` | ✅ |
-| Batch | `.bat` | ✅ |
+**Solução**: Verifique o caminho do AutoCAD em `fix_ortofotos.bat`
+```batch
+REM Edite a linha com o caminho correto do acad.exe
+start "" "C:\Program Files\Autodesk\AutoCAD XXXX\acad.exe" ...
+```
 
 ---
 
-## 13. Extensões Futuras
+## 🛣️ Roadmap
 
-| Feature | Descrição | Prioridade |
-|---------|-----------|------------|
-| **Watchdog** | Monitora pasta de ortofotos e alerta ao adicionar/remover | Alta |
-| **Dashboard Streamlit** | Interface web interativa para análise | Média |
-| **Integração Git** | Versiona catálogo e detecta mudanças | Baixa |
-| **Suporte DXF nativo** | Correção direta em arquivos DXF via ezdxf | Média |
-| **Comparação entre versões** | Diff de catálogos entre entregas | Baixa |
-| **Pipeline CI/CD** | Validação automática em commit | Baixa |
+### v1.1.0 (Q2 2026)
+- [ ] Watchdog para monitoramento em tempo real
+- [ ] Suporte a DXF nativo (ezdxf direto)
+- [ ] Comparação entre versões de catálogos
+
+### v2.0.0 (Q3 2026)
+- [ ] Dashboard Streamlit interativo
+- [ ] Integração Git para versionamento
+- [ ] Pipeline CI/CD com GitHub Actions
+- [ ] Suporte a múltiplos formatos de imagem
+
+### v2.5.0 (Q4 2026)
+- [ ] API REST (FastAPI)
+- [ ] Banco de dados (SQLite/PostgreSQL)
+- [ ] Interface gráfica (PyQt/Tkinter)
 
 ---
 
-## Créditos
+## 📖 Documentação Adicional
 
-- **Problema identificado**: PDF "Recuperando ortofotos no Mapa e Salvamento adequado em CD ou DVD.pdf"
-- **Projeto**: Mapa de Pendências — Nova Tamoios / KYIOSHI
-- **Solução**: OrtoFoto Manager v1.0.0
-- **Arquitetura**: Python + pandas + matplotlib + ezdxf + scripts AutoCAD
-- **Data**: 06/04/2026
+- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** — Detalhes técnicos
+- **[API.md](docs/API.md)** — Referência de funções
+- **[CONTRIBUTING.md](CONTRIBUTING.md)** — Como contribuir
 
+---
 
+## 🤝 Contribuições
+
+Contribuições são bem-vindas! Por favor:
+
+1. **Fork** o repositório
+2. Crie uma branch (`git checkout -b feature/sua-feature`)
+3. Commit suas mudanças (`git commit -m 'Add feature'`)
+4. Push para a branch (`git push origin feature/sua-feature`)
+5. Abra um **Pull Request**
+
+### Código de Conduta
+
+Somos comprometidos em fornecer um ambiente acolhedor e inclusivo. Leia nosso [Código de Conduta](CODE_OF_CONDUCT.md).
+
+---
+
+## 📄 Licença
+
+Este projeto está licenciado sob a **MIT License** — veja [LICENSE](LICENSE) para detalhes.
+
+---
+
+## 👤 Autor
+
+**Fábio Luiz de Oliveira**
+
+- 📧 Email: [fabioluol@hotmail.com](mailto:fabioluol@hotmail.com)
+- 🔗 LinkedIn: [linkedin.com/in/fabio-luiz-oliveira](https://linkedin.com/in/fabio-luiz-oliveira)
+- 🌐 Portfólio: [portfolio-analista-dados.vercel.app](https://portfolio-analista-dados.vercel.app)
+
+---
+
+<div align="center">
+
+**⭐ Se este projeto foi útil, considere dar uma estrela!**
+
+[⬆ Voltar ao topo](#-ortofoto-manager--automação-inteligente-de-ortofotos-em-engenharia-civil)
+
+</div>
