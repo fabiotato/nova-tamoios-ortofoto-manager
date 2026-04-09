@@ -42,6 +42,8 @@ C:\Usuarios\Fabio\Projetos\Novas\Ortofotos Nova Tamoios\L1_ORTOFOTO_001.png
 - 💾 Transferência via HD externo ou mídia física
 - 👥 Múltiplos usuários acessando em máquinas distintas
 
+![Sem ortofotos](https://github.com/fabiotato/nova-tamoios-ortofoto-manager/blob/main/Imagens/Sem%20ortofotos.png)
+
 ### Impacto no Projeto Nova Tamoios
 
 | Métrica | Valor |
