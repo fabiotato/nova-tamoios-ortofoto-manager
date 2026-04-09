@@ -1,0 +1,57 @@
+# AutoCAD
+*.bak
+*.dwg
+*.dxf
+*.sv$
+*.ac$
+*.dwl
+*.dwl2
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+.venv/
+venv/
+ENV/
+
+# Secrets / Configs
+.env
+.env.*
+*.local
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Output / Imagens Pesadas (Apenas mantenha os exemplos do portfólio)
+# output/
+# *.png
+# *.jpg
