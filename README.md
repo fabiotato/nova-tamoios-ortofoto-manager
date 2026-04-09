@@ -488,8 +488,8 @@ start "" "C:\Program Files\Autodesk\AutoCAD XXXX\acad.exe" ...
 **Fábio Luiz de Oliveira**
 
 - 📧 Email: [fabioluol@hotmail.com](mailto:fabioluol@hotmail.com)
-- 🔗 LinkedIn: [linkedin.com/in/fabio-luiz-de-oliveira](https://linkedin.com/in/fabio-luiz-de-oliveira)
-- 🌐 Portfólio: [portfolio-analista-dados.vercel.app](https://portfolio-analista-dados-azure.vercel.app)
+- 🔗 LinkedIn: [LinkedIn](https://linkedin.com/in/fabio-luiz-de-oliveira)
+- 🌐 Portfólio: [Acesse meu Portifólio](https://portfolio-analista-dados-azure.vercel.app)
 
 ---
 
