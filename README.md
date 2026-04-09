@@ -476,38 +476,6 @@ start "" "C:\Program Files\Autodesk\AutoCAD XXXX\acad.exe" ...
 - [ ] Banco de dados (SQLite/PostgreSQL)
 - [ ] Interface gráfica (PyQt/Tkinter)
 
----
-
-## 📖 Documentação Adicional
-
-- **[ARCHITECTURE.md](docs/ARCHITECTURE.md)** — Detalhes técnicos
-- **[API.md](docs/API.md)** — Referência de funções
-- **[CONTRIBUTING.md](CONTRIBUTING.md)** — Como contribuir
-
----
-
-## 🤝 Contribuições
-
-Contribuições são bem-vindas! Por favor:
-
-1. **Fork** o repositório
-2. Crie uma branch (`git checkout -b feature/sua-feature`)
-3. Commit suas mudanças (`git commit -m 'Add feature'`)
-4. Push para a branch (`git push origin feature/sua-feature`)
-5. Abra um **Pull Request**
-
-### Código de Conduta
-
-Somos comprometidos em fornecer um ambiente acolhedor e inclusivo. Leia nosso [Código de Conduta](CODE_OF_CONDUCT.md).
-
----
-
-## 📄 Licença
-
-Este projeto está licenciado sob a **MIT License** — veja [LICENSE](LICENSE) para detalhes.
-
----
-
 ## 👤 Autor
 
 **Fábio Luiz de Oliveira**
