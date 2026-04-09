@@ -9,6 +9,8 @@
 
 ---
 
+![Capa do Projeto](https://github.com/fabiotato/nova-tamoios-ortofoto-manager/blob/main/Imagens/Capa%20do%20Projeto.jpg)
+
 ## 📚 Índice
 
 - [O Problema](#-o-problema)
