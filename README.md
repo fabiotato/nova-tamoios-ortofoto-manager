@@ -20,8 +20,6 @@
 - [Arquitetura](#-arquitetura)
 - [Saídas Geradas](#-saídas-geradas)
 - [Aplicação em Engenharia de Dados](#-aplicação-em-engenharia-de-dados)
-- [Roadmap](#-roadmap)
-- [Contribuições](#-contribuições)
 
 ---
 
