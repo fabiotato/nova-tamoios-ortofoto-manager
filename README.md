@@ -122,7 +122,10 @@ C:\Usuarios\Fabio\Projetos\Novas\Ortofotos Nova Tamoios\L1_ORTOFOTO_001.png
 - Logs de execução
 - Validação automática
 
----
+![Lote 1_visão geral com ortofotos](https://github.com/fabiotato/nova-tamoios-ortofoto-manager/blob/main/Imagens/Lote%201%20_vis%C3%A3o%20geral%20com%20ortofotos.png)
+
+![Lote 2_visão geral com ortofotos](https://github.com/fabiotato/nova-tamoios-ortofoto-manager/blob/main/Imagens/Lote%202%20_vis%C3%A3o%20geral%20com%20ortofotos.png)
+
 
 ## 📋 Requisitos
 
