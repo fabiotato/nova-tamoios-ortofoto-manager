@@ -204,7 +204,6 @@ python main.py --scan-only
 
 Gera catálogo CSV/JSON sem processar scripts.
 
-![ortofotos_catalogo](https://github.com/fabiotato/nova-tamoios-ortofoto-manager/blob/main/output/ortofotos_catalogo.csv)
 
 ### Opção 3: Apenas Scripts
 
@@ -299,6 +298,7 @@ ortofoto_manager/
 nome_arquivo, lote, tamanho_bytes, tamanho_mb, largura_px, altura_px, 
 resolucao_total_px, formato, data_criacao, data_modificacao, status, tamanho_categoria
 ```
+![Veja aqui como ficam catalogadas as ortofotos no arquivo ".CSV"](https://github.com/fabiotato/nova-tamoios-ortofoto-manager/blob/main/output/ortofotos_catalogo.csv)
 
 ### 2. Gráficos de Análise
 
